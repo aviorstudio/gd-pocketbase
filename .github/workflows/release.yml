@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Version bump
+        required: true
+        type: choice
+        options: [patch, minor, major]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Determine release version
+        id: release
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          set -euo pipefail
+          latest="$(git tag --list 'v[0-9]*' | sed -E 's/^v//' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)"
+          if [ -z "$latest" ]; then
+            version="0.0.1"
+          else
+            IFS=. read -r major minor patch <<< "$latest"
+            case "$BUMP" in
+              major) major=$((major + 1)); minor=0; patch=0 ;;
+              minor) minor=$((minor + 1)); patch=0 ;;
+              patch) patch=$((patch + 1)) ;;
+            esac
+            version="${major}.${minor}.${patch}"
+          fi
+          plugin_version="$(sed -n -E 's/^version="([^"]+)"/\1/p' addon/plugin.cfg)"
+          test "$plugin_version" = "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+      - name: Package addon
+        run: |
+          package_root="dist/@aviorstudio_gd-pocketbase"
+          mkdir -p "$package_root"
+          cp addon/plugin.cfg addon/plugin.gd "$package_root/"
+          cp addon/*.uid "$package_root/" 2>/dev/null || true
+          cp -R addon/src "$package_root/"
+          (cd "$package_root" && zip -r "../@aviorstudio_gd-pocketbase.zip" .)
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "${{ steps.release.outputs.tag }}" dist/*.zip --title "${{ steps.release.outputs.tag }}" --notes "Release ${{ steps.release.outputs.tag }}"
+      - name: Install GDAM
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          curl -fsSL https://raw.githubusercontent.com/aviorstudio/gdam/main/scripts/install_cli.sh | INSTALL_DIR="$RUNNER_TEMP/bin" sh
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - name: Publish to GDAM
+        env:
+          GDAM_SECRET_KEY: ${{ secrets.GDAM_SECRET_KEY }}
+        run: gdam publish "@aviorstudio/gd-pocketbase" "${{ steps.release.outputs.version }}" "${{ steps.release.outputs.tag }}" "@aviorstudio_gd-pocketbase.zip"
