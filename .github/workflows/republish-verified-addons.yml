@@ -1,0 +1,210 @@
+name: Republish verified Avior Studio addons
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type REPUBLISH-25 to authorize the one-time production publication
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: gdam-republish-25
+  cancel-in-progress: false
+
+jobs:
+  republish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Publish fixed verified release inventory
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+          GDAM_SECRET_KEY: ${{ secrets.GDAM_SECRET_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+
+          if [[ "$CONFIRMATION" != "REPUBLISH-25" ]]; then
+            echo "::error::confirmation must exactly match REPUBLISH-25"
+            exit 1
+          fi
+          if [[ -z "$GDAM_SECRET_KEY" ]]; then
+            echo "::error::required publishing credential is unavailable"
+            exit 1
+          fi
+
+          python3 <<'PY'
+          import http.client
+          import json
+          import os
+          import signal
+          import sys
+          import urllib.parse
+
+          HOST = "api.gdam.dev"
+          OWNER = "aviorstudio"
+          CONNECT_TIMEOUT_SECONDS = 10
+          REQUEST_TIMEOUT_SECONDS = 30
+          MAX_REQUEST_BYTES = 16 << 10
+          MAX_RESPONSE_BYTES = 1 << 20
+
+          # addon|tag|release ID|commit SHA|asset ID|asset name|digest|published_at|prerelease
+          INVENTORY = """
+          gd-pocketbase|v0.0.1|362263442|216fb18ef132146fc8242b11672cba3219a2a889|495078722|@aviorstudio_gd-pocketbase.zip|sha256:44cfebba50df015ee2b36951152b64d1e8e38f9c5479f2b63d14840b2019fc51|2026-07-30T07:50:44Z|false
+          gd-observe|v0.0.1|331232113|f0728dff5e0cb6d7d523f91d49a4b62a060bd6b2|432617619|@aviorstudio_gd-observe.zip|sha256:1cdb12b558505f80d7be42eab797f5151246734f97ec936982e19fc90f795c71|2026-05-29T01:44:05Z|false
+          gd-observe|gd-v0.0.2|331269099|6b7c99ed8873620a270ecc5721b69e6421cb87b8|432695311|@aviorstudio_gd-observe.zip|sha256:3080a2097216547a54cd79c26a1f7932f1803c5bf6908532565e59dad9fc00ac|2026-05-29T03:58:03Z|false
+          gd-observe|gd-v0.0.3|342589634|bacdadd9266f0400ca4fa91d62a382d1d80aeb58|453915423|@aviorstudio_gd-observe.zip|sha256:799096f1a230a54b7501aa09e427879d5f3164f6ffc20596dbc123fbdc36bb5b|2026-06-21T19:43:28Z|false
+          gd-audio|v0.0.1|329184763|9d76dc93e3b45dceda7aae2032c3cdd57aae47ad|429903464|@aviorstudio_gd-audio.zip|sha256:091c94c140f80e53ca2c984904ed456c4fde80c3cd30fc88f938c5e996bfb88f|2026-05-26T04:29:15Z|false
+          gd-redis|v0.0.1|329209675|74c3115fddb02c7d1f8b24dcd49a9b9f1a49b938|429956597|@aviorstudio_gd-redis.zip|sha256:ef171760054c70ec585dd99deed0c203edc7ea823c0eae213654a2448786fcc8|2026-05-26T06:07:16Z|false
+          gd-supabase|v0.0.1|329209343|d06bbc2b630bb48828b14a371e9126090cad30e9|429955788|@aviorstudio_gd-supabase.zip|sha256:58783695c9fbefb101d820de5be9d4e18761790b3102055e6f05a7f6d686ab84|2026-05-26T06:06:05Z|false
+          gd-gesture|v0.0.1|329209879|46bc945ae1167908f076404f46178a3b21eb8a4b|429957086|@aviorstudio_gd-gesture.zip|sha256:bbc1528b96192c34a09642741600c71edd3e8c842ab84d13ebb15c09b28479ed|2026-05-26T06:08:04Z|false
+          gd-responsive|v0.0.1|329186155|8b8d0b60f2a7b2abd7b1359a7a83348ce4d1200f|429904245|@aviorstudio_gd-responsive.zip|sha256:98c9b20b7261213f20282efcc3d643a296cd90e41df8dacd4e6b5df2f1e0fef8|2026-05-26T04:34:15Z|false
+          gd-responsive|v0.0.2|341108545|b7a7f1bf5e507dc39168d76999f59d54b41de5f8|450726217|@aviorstudio_gd-responsive.zip|sha256:dc01762085f5e582a6264c1232a57983853fb01de462032b20bc44f4b475684e|2026-06-18T00:39:09Z|false
+          gd-responsive|v0.0.3|341112116|d468edb484a35c7245ee172460e2f63efd47df56|450738141|@aviorstudio_gd-responsive.zip|sha256:4d71e8eb373e3029df3f953fe6e779f3a987d0f2c87fa6f92c73f716a496a908|2026-06-18T00:55:47Z|false
+          gd-responsive|v0.0.4|341117299|2e04edde960fe8678191180e427249a325c27341|450753072|@aviorstudio_gd-responsive.zip|sha256:c0cd34d932c53a37a9bf601efbb9692922aef3c9242d4815082634930095115c|2026-06-18T01:19:20Z|false
+          gd-responsive|v0.0.5|342595252|142fc4d3a11572b757cacb963a7c6fe0409a7164|453935816|@aviorstudio_gd-responsive.zip|sha256:76f744bb2debb18e90eb21610b9d82d59569ad999a3441e8f2510fedf091f994|2026-06-21T20:21:58Z|false
+          gd-serialization|v0.0.1|329209406|43c2d960312652bc1f13d3c0c57cb5803561b164|429956002|@aviorstudio_gd-serialization.zip|sha256:64ef5662b8e3f161f5e57140f25e293a07578c441751597ae033384db1bc5e01|2026-05-26T06:06:17Z|false
+          gd-telemetry|v0.0.1|329209140|8267e16cccff4359bdf495d68b00404ecf870c9e|429955343|@aviorstudio_gd-telemetry.zip|sha256:58bb6b9d641785c632c5387009e183ce2fcaaeee6823ec41afca7e7fb9a196c5|2026-05-26T06:05:25Z|false
+          gd-env|v0.0.1|329209934|b4d05d7512cadb06fb3bfc451807b1a11709c4a8|429957261|@aviorstudio_gd-env.zip|sha256:5f57c304e133ede56c831f08711e9d3ab74b7c8ecfba668ba0f23fe535020603|2026-05-26T06:08:15Z|false
+          gd-router|v0.0.1|329186115|b524c90a5f9f907d1f699d404115ba7780e9c14d|429904111|@aviorstudio_gd-router.zip|sha256:21e33c5afb1b851967d8a4a1f797c6b78f768bf2a1f4874a76b2a31dd58ae073|2026-05-26T04:33:58Z|false
+          gd-router|v0.0.2|342413868|e866ec3b05ea462b5dcc3dc69742aacc537ff000|453275838|@aviorstudio_gd-router.zip|sha256:c9d207e66805696fe9b64d8c67d5accd57cef8f700c3c0ba4cca34735673b9f6|2026-06-20T22:33:53Z|false
+          gd-object-pool|v0.0.1|329209707|3c7098f905d80fceea9a5182c5a4f84419c6ed78|429956636|@aviorstudio_gd-object-pool.zip|sha256:654ec925ce300a1fa310a80c37436434cb7c9fe36f021fc36f34fc8074cee60c|2026-05-26T06:07:25Z|false
+          gd-object-pool|v0.0.2|331261046|2ddd3d415d8616864de2d96173bae10c938d49cd|432674870|@aviorstudio_gd-object-pool.zip|sha256:c4b55f86f0d0d565ec190cc88c04febc4e6f3429fe065aa84a7a5aaf6b5e4d88|2026-05-29T03:24:15Z|false
+          gd-network|v0.0.1|329209781|ba54b90d99b76edfa1468bbc52a293c3b6bedf4b|429956786|@aviorstudio_gd-network.zip|sha256:3640b62186d61a829a896592938719b9ce5e86ebb16d5c3f099d68c382537398|2026-05-26T06:07:41Z|false
+          gd-network|v0.0.2|331261034|6951f3d22dbd181f72f86fa26875567854a04d80|432674853|@aviorstudio_gd-network.zip|sha256:6d382bf65daff799b1cb9a7986b7f8103593d73cdabb638cec2ab8b577126a92|2026-05-29T03:24:11Z|false
+          gd-playwright|gd-v0.0.1|329210709|ef46ddf4de18b1028f4aae02695558eba16f2bb4|429959279|@aviorstudio_gd-playwright.zip|sha256:300603896513701e5ba241a7d2b947dfa55d584d1f901a91048a3abafc6342ce|2026-05-26T06:11:04Z|false
+          gd-playwright|gd-v0.0.2|342420099|aaeb054b3d10f6787a2d51c429f9fc813a3951a2|453309388|@aviorstudio_gd-playwright.zip|sha256:a8bf9a95a3f259f0d5b337c1bcab9ebf89f8de73d2b24f57c2883c49bfa8c9e9|2026-06-20T23:22:19Z|false
+          gd-playwright|gd-v0.0.3|357073028|594876b1f2eb19a1d88069753609f71625308d1f|484124005|@aviorstudio_gd-playwright.zip|sha256:06d1fdb6225efeb5906b4f507b98efc53f8b5abf12ad08dc8d63b7a343f3f8cc|2026-07-21T01:51:24Z|false
+          """
+
+          EXCLUSIONS = {
+              "gd-observe": {"cli-v0.0.2", "cli-v0.0.3", "cli-v0.0.4", "cli-v0.0.5"},
+              "gd-playwright": {"0.0.1", "cli-v0.0.1", "cli-v0.0.2", "cli-v0.0.3"},
+          }
+          SECRET = os.environ.get("GDAM_SECRET_KEY", "")
+
+          def fail(message):
+              print(f"::error::{message}")
+              raise SystemExit(1)
+
+          def timeout_handler(_signum, _frame):
+              raise TimeoutError("request deadline exceeded")
+
+          signal.signal(signal.SIGALRM, timeout_handler)
+
+          def request(method, path, payload=None, expected_status=200):
+              body = None
+              headers = {"Accept": "application/json", "User-Agent": "gdam-republish-25"}
+              if payload is not None:
+                  body = json.dumps(payload, separators=(",", ":")).encode()
+                  if len(body) > MAX_REQUEST_BYTES:
+                      fail("production API request exceeded 16384 bytes")
+                  headers["Content-Type"] = "application/json"
+              connection = http.client.HTTPSConnection(HOST, timeout=CONNECT_TIMEOUT_SECONDS)
+              try:
+                  signal.alarm(REQUEST_TIMEOUT_SECONDS)
+                  connection.connect()
+                  connection.sock.settimeout(REQUEST_TIMEOUT_SECONDS)
+                  connection.request(method, path, body=body, headers=headers)
+                  response = connection.getresponse()
+                  raw = response.read(MAX_RESPONSE_BYTES + 1)
+              except Exception:
+                  fail("production API request failed")
+              finally:
+                  signal.alarm(0)
+                  connection.close()
+              if len(raw) > MAX_RESPONSE_BYTES:
+                  fail("production API response exceeded 1048576 bytes")
+              if response.status != expected_status:
+                  fail(f"production API returned unexpected status {response.status}")
+              try:
+                  return json.loads(raw)
+              except (UnicodeDecodeError, json.JSONDecodeError):
+                  fail("production API returned invalid bounded JSON")
+
+          def parse_inventory():
+              rows = []
+              for line in INVENTORY.strip().splitlines():
+                  parts = line.strip().split("|")
+                  if len(parts) != 9:
+                      fail("fixed inventory is malformed")
+                  addon, tag, release_id, commit_sha, asset_id, asset_name, digest, published_at, prerelease = parts
+                  rows.append({
+                      "addon": addon,
+                      "tag_name": tag,
+                      "github_release_id": int(release_id),
+                      "commit_sha": commit_sha,
+                      "asset_id": int(asset_id),
+                      "asset_name": asset_name,
+                      "asset_digest": digest,
+                      "published_at": published_at,
+                      "prerelease": prerelease == "true",
+                  })
+              if len(rows) != 25 or len({(row["addon"], row["tag_name"]) for row in rows}) != 25:
+                  fail("fixed inventory must contain 25 unique addon/tag tuples")
+              return rows
+
+          def exact_identity(row, current):
+              fields = (
+                  "tag_name", "github_release_id", "commit_sha", "asset_id",
+                  "asset_name", "asset_digest", "published_at", "prerelease",
+              )
+              return all(current.get(field) == row[field] for field in fields)
+
+          inventory = parse_inventory()
+          by_addon = {}
+          for row in inventory:
+              by_addon.setdefault(row["addon"], []).append(row)
+
+          for addon in sorted(by_addon):
+              encoded = urllib.parse.quote(addon, safe="")
+              addon_view = request("GET", f"/api/v1/owners/{OWNER}/addons/{encoded}")
+              expected_repo = f"https://github.com/{OWNER}/{addon}"
+              if addon_view.get("owner") != OWNER or addon_view.get("name") != addon or addon_view.get("repo") != expected_repo:
+                  fail(f"repository identity conflict for {addon}")
+
+          already_present = 0
+          published = 0
+          for row in inventory:
+              addon = row["addon"]
+              tag = row["tag_name"]
+              encoded = urllib.parse.quote(addon, safe="")
+              path = f"/api/v1/owners/{OWNER}/addons/{encoded}/releases"
+              releases = request("GET", path)
+              matching = [release for release in releases if release.get("tag_name") == tag]
+              if len(matching) > 1:
+                  fail(f"duplicate current identity for {addon} {tag}")
+              if matching:
+                  if not exact_identity(row, matching[0]):
+                      fail(f"conflicting current identity for {addon} {tag}")
+                  already_present += 1
+                  print(f"{addon} {tag} already-present")
+                  continue
+
+              request("POST", "/api/v1/publish", {
+                  "secret_key": SECRET,
+                  "owner": OWNER,
+                  "addon": addon,
+                  "tag_name": tag,
+                  "asset_name": row["asset_name"],
+              }, expected_status=201)
+              releases = request("GET", path)
+              matching = [release for release in releases if release.get("tag_name") == tag]
+              if len(matching) != 1 or not exact_identity(row, matching[0]):
+                  fail(f"readback identity mismatch for {addon} {tag}")
+              published += 1
+              print(f"{addon} {tag} published")
+
+          for addon, excluded_tags in EXCLUSIONS.items():
+              encoded = urllib.parse.quote(addon, safe="")
+              releases = request("GET", f"/api/v1/owners/{OWNER}/addons/{encoded}/releases")
+              present = sorted(excluded_tags.intersection({release.get("tag_name") for release in releases}))
+              if present:
+                  fail(f"excluded release is present for {addon}")
+
+          print(f"publication complete total=25 published={published} already-present={already_present} exclusions=8")
+          PY
