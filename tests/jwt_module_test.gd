@@ -3,16 +3,23 @@ extends SceneTree
 const JwtModule = preload("res://addon/src/jwt_module.gd")
 
 func _init() -> void:
+	var assertion_count: int = 0
 	var expiry: int = int(Time.get_unix_time_from_system()) + 120
 	var token: String = _build_jwt({
 		"sub": "user-1", "email": "player@example.com", "exp": expiry, "iat": expiry - 60
 	})
 	var payload: JwtModule.JwtPayload = JwtModule.decode_payload(token)
 	_assert(payload.subject == "user-1", "subject should decode")
+	assertion_count += 1
 	_assert(payload.email == "player@example.com", "email should decode")
+	assertion_count += 1
 	_assert(JwtModule.get_expiry_unix(token) == expiry, "expiry should decode")
+	assertion_count += 1
 	_assert(not JwtModule.is_expired(token, expiry - 1), "token should be active before exp")
+	assertion_count += 1
 	_assert(JwtModule.is_expired(token, expiry), "token should expire at exp")
+	assertion_count += 1
+	print("TEST_SENTINEL:jwt_module_test.gd:%d" % assertion_count)
 	quit()
 
 func _build_jwt(claims: Dictionary[String, Variant]) -> String:
