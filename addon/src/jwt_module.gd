@@ -42,7 +42,7 @@ static func inspect_expiry(token: String, now_unix: int = -1, skew_seconds: int 
 	if token.to_utf8_buffer().size() > MAX_TOKEN_BYTES:
 		return _invalid(payload, ErrorCode.TOKEN_TOO_LARGE, "token exceeds 16384 bytes")
 	var parts: PackedStringArray = token.split(".")
-	if parts.size() != 3 or parts[1].is_empty():
+	if parts.size() != 3 or parts[0].is_empty() or parts[1].is_empty() or parts[2].is_empty():
 		return _invalid(payload, ErrorCode.MALFORMED_TOKEN, "JWT must have three nonempty segments")
 	if not _is_base64url(parts[1]):
 		return _invalid(payload, ErrorCode.INVALID_BASE64URL, "payload is not canonical base64url")
