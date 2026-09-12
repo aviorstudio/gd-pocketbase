@@ -58,8 +58,11 @@ runs:
         curl --fail --location --silent --show-error --output templates.tpz \
           https://github.com/godotengine/godot/releases/download/${{ inputs.godot-version }}-stable/Godot_v${{ inputs.godot-version }}-stable_export_templates.tpz
         echo "${{ inputs.templates-sha256 }}  templates.tpz" | sha256sum --check
-        unzip -q templates.tpz
-        mv templates/* ~/.local/share/godot/export_templates/${{ inputs.godot-version }}.stable/
+        unzip -q templates.tpz \
+          templates/web_nothreads_debug.zip \
+          templates/web_nothreads_release.zip
+        mv templates/web_nothreads_*.zip \
+          ~/.local/share/godot/export_templates/${{ inputs.godot-version }}.stable/
 
     - name: Verify Godot templates
       if: inputs.install-templates == 'true'
