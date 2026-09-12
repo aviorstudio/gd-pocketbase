@@ -26,6 +26,8 @@ runs:
       with:
         godot-version: '4.7.2'
         godot-sha256: 'cadd3204e728a35d3f13adb7fd0d7902636b79f6b95c40c265eb73b6c35329e4'
+        install-templates: 'true'
+        templates-sha256: 'f298490b8d44d934be425a5a65a51bf15f422428b229a06a6e11d9ffea248011'
 
     # No `if: hashFiles(...)` guard. This step used to skip itself when
     # tests/test.sh was absent, which is indistinguishable from the script being
@@ -34,6 +36,12 @@ runs:
     - name: Godot tests
       shell: bash
       run: ./tests/test.sh
+
+    - name: Compile supported web path
+      shell: bash
+      run: |
+        mkdir -p dist/web
+        godot --headless --path . --export-release Web dist/web/index.html
 
     - name: Assemble exact release ZIP
       shell: bash

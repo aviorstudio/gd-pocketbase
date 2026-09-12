@@ -6,6 +6,8 @@ src/auth_response_module.gd
 src/auth_response_module.gd.uid
 src/client_id_module.gd
 src/client_id_module.gd.uid
+src/credential_adapter.gd
+src/credential_adapter.gd.uid
 src/jwt_module.gd
 src/jwt_module.gd.uid
 src/session_store_module.gd
