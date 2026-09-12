@@ -1,5 +1,6 @@
 [application]
 config/name="GD PocketBase Tests"
+run/main_scene="res://tests/web/web_smoke.tscn"
 
 [rendering]
 renderer/rendering_method="gl_compatibility"
