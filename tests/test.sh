@@ -2,16 +2,21 @@
 set -euo pipefail
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 ROOT_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
-GODOT="${GODOT_BIN:-godot}"
 TEST_HOME=$(mktemp -d)
 trap 'rm -rf "$TEST_HOME"' EXIT
 export XDG_CONFIG_HOME="$TEST_HOME/config"
 export XDG_DATA_HOME="$TEST_HOME/data"
-FAILURES=0
-for test in "$SCRIPT_DIR"/*_test.gd; do
-    echo "Running $(basename "$test")..."
-    if ! "$GODOT" --headless --path "$ROOT_DIR" --script "$test" 2>&1; then
-        FAILURES=$((FAILURES + 1))
-    fi
+
+"$SCRIPT_DIR/gate_self_test.sh"
+
+mapfile -t TESTS < <(printf '%s\n' "$SCRIPT_DIR"/*_test.gd | sort)
+if [[ ${#TESTS[@]} -eq 0 || ! -f "${TESTS[0]}" ]]; then
+    echo "No GDScript tests found" >&2
+    exit 1
+fi
+
+for test in "${TESTS[@]}"; do
+    "$SCRIPT_DIR/run_godot_test.sh" "$ROOT_DIR" "$test"
 done
-exit $FAILURES
+
+echo "TEST_SUITE_PASS:gdscripts:${#TESTS[@]}"

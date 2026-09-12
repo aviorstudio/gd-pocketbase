@@ -50,6 +50,13 @@ backend should keep PocketBase superuser credentials private.
 ./tests/test.sh
 ```
 
+> **Correction ([fieldsofrevik#149](https://github.com/aviorstudio/fieldsofrevik/issues/149)):**
+> Earlier CI and release text overstated what a green run proved. The prior
+> runner could accept engine errors followed by a zero exit and did not test the
+> packaged ZIP or editor lifecycle. Current gates require error-log rejection,
+> reachable assertion sentinels, bounded execution, a closed package manifest,
+> and enable/restart/smoke/disable/restart checks against the assembled ZIP.
+
 ## License
 
 MIT
