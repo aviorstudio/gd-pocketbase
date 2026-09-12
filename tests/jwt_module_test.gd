@@ -17,6 +17,8 @@ func _init() -> void:
 	_assert(JwtModule.inspect_expiry(_build_jwt({"exp": 200, "sub": "玩家"}), 100).subject == "玩家", "Unicode metadata should decode")
 
 	_assert_invalid("token", JwtModule.ErrorCode.MALFORMED_TOKEN)
+	_assert_invalid(".payload.signature", JwtModule.ErrorCode.MALFORMED_TOKEN)
+	_assert_invalid("header.payload.", JwtModule.ErrorCode.MALFORMED_TOKEN)
 	_assert_invalid("a.%%%25.c", JwtModule.ErrorCode.INVALID_BASE64URL)
 	_assert_invalid(_build_raw_payload("not-json"), JwtModule.ErrorCode.INVALID_JSON)
 	_assert_invalid(_build_jwt({"sub": "missing"}), JwtModule.ErrorCode.MISSING_EXP)
