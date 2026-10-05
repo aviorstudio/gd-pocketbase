@@ -1,3 +1,5 @@
+<!-- Generated from private documentation source. Do not edit directly. Source SHA256: 0b8718be55d5d3faae0d9bc43459da34fe9123c408d7befdf1a3888782a556a1 -->
+
 # gd-pocketbase
 
 PocketBase-friendly auth and bounded session primitives for Godot 4.
@@ -79,26 +81,14 @@ backend should keep PocketBase superuser credentials private.
 - **D-08:** legacy data is never deleted by migration. A destination is usable
   only after a successful commit/readback.
 
-> **Correction ([fieldsofrevik#149](https://github.com/aviorstudio/fieldsofrevik/issues/149)):**
+> **Usage note:**
 > The earlier README described JWT decoding as an expiry check without stating
 > that missing/malformed `exp` was treated as active, and described persistence
 > and stable IDs without disclosing plaintext files or browser `localStorage`.
 > The APIs above replace those unsafe/ambiguous contracts; there is no
 > compatibility shim.
 
-## Testing
-
-```sh
-./tests/test.sh
-```
-
-> **Correction ([fieldsofrevik#149](https://github.com/aviorstudio/fieldsofrevik/issues/149)):**
-> Earlier CI and release text overstated what a green run proved. The prior
-> runner could accept engine errors followed by a zero exit and did not test the
-> packaged ZIP or editor lifecycle. Current gates require error-log rejection,
-> reachable assertion sentinels, bounded execution, a closed package manifest,
-> and enable/restart/smoke/disable/restart checks against the assembled ZIP.
 
 ## License
 
-MIT
+See `LICENSE`.
