@@ -1,70 +1,28 @@
-name: 'Setup Godot'
-description: 'Install Godot binary with caching and optionally install export templates'
+name: Setup verified Godot
+description: Install caller-reviewed archives through the immutable released shared
+  installer
 inputs:
   godot-version:
-    description: 'Godot version to install (e.g., 4.4.1)'
+    description: Godot version to install (e.g., 4.4.1)
     required: true
   godot-sha256:
-    description: 'SHA-256 of the Godot Linux archive'
+    description: SHA-256 of the Godot Linux archive
     required: true
   install-templates:
-    description: 'Whether to install export templates'
+    description: Whether to install export templates
     required: false
     default: 'false'
   templates-sha256:
-    description: 'SHA-256 of the export templates archive'
+    description: SHA-256 of the export templates archive
     required: false
     default: ''
-
 runs:
-  using: 'composite'
+  using: composite
   steps:
-    - name: Cache Godot binary
-      id: cache-godot
-      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-      with:
-        path: /usr/local/bin/godot
-        key: godot-${{ inputs.godot-version }}-${{ inputs.godot-sha256 }}-${{ runner.os }}
-
-    - name: Install Godot
-      if: steps.cache-godot.outputs.cache-hit != 'true'
-      shell: bash
-      run: |
-        curl --fail --location --silent --show-error --output godot.zip \
-          https://github.com/godotengine/godot/releases/download/${{ inputs.godot-version }}-stable/Godot_v${{ inputs.godot-version }}-stable_linux.x86_64.zip
-        echo "${{ inputs.godot-sha256 }}  godot.zip" | sha256sum --check
-        unzip -q godot.zip
-        chmod +x Godot_v${{ inputs.godot-version }}-stable_linux.x86_64
-        sudo mv Godot_v${{ inputs.godot-version }}-stable_linux.x86_64 /usr/local/bin/godot
-
-    - name: Verify Godot installation
-      shell: bash
-      run: godot --version
-
-    - name: Cache Godot export templates
-      if: inputs.install-templates == 'true'
-      id: cache-godot-templates
-      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-      with:
-        path: ~/.local/share/godot/export_templates/${{ inputs.godot-version }}.stable
-        key: godot-templates-${{ inputs.godot-version }}-${{ inputs.templates-sha256 }}-${{ runner.os }}
-
-    - name: Install Godot export templates
-      if: inputs.install-templates == 'true' && steps.cache-godot-templates.outputs.cache-hit != 'true'
-      shell: bash
-      run: |
-        test -n "${{ inputs.templates-sha256 }}"
-        mkdir -p ~/.local/share/godot/export_templates/${{ inputs.godot-version }}.stable
-        curl --fail --location --silent --show-error --output templates.tpz \
-          https://github.com/godotengine/godot/releases/download/${{ inputs.godot-version }}-stable/Godot_v${{ inputs.godot-version }}-stable_export_templates.tpz
-        echo "${{ inputs.templates-sha256 }}  templates.tpz" | sha256sum --check
-        unzip -q templates.tpz \
-          templates/web_nothreads_debug.zip \
-          templates/web_nothreads_release.zip
-        mv templates/web_nothreads_*.zip \
-          ~/.local/share/godot/export_templates/${{ inputs.godot-version }}.stable/
-
-    - name: Verify Godot templates
-      if: inputs.install-templates == 'true'
-      shell: bash
-      run: ls -la ~/.local/share/godot/export_templates/${{ inputs.godot-version }}.stable/
+  - uses: nicodes/tools/godot-setup@cf0e560c9bbb888488191fcce03409b6c6fbdc28
+    with:
+      version: ${{ inputs.godot-version }}
+      origin: godot
+      binary-checksum: sha256:${{ inputs.godot-sha256 }}
+      templates-checksum: sha256:${{ inputs.templates-sha256 }}
+      install-templates: ${{ inputs.install-templates }}
