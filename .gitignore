@@ -4,3 +4,4 @@
 dist/
 evidence/*.import
 tests/**/*.gd.uid
+.artifacts/

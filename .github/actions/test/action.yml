@@ -29,28 +29,6 @@ runs:
         install-templates: 'true'
         templates-sha256: 'f298490b8d44d934be425a5a65a51bf15f422428b229a06a6e11d9ffea248011'
 
-    # No `if: hashFiles(...)` guard. This step used to skip itself when
-    # tests/test.sh was absent, which is indistinguishable from the script being
-    # renamed or deleted -- a skipped test is a green tick. This addon has a
-    # suite, so the step runs unconditionally and a missing script now fails.
-    - name: Godot tests
+    - name: Run addon profile gates
       shell: bash
-      run: ./tests/test.sh
-
-    - name: Compile supported web path
-      shell: bash
-      run: |
-        mkdir -p dist/web
-        godot --headless --path . --export-release Web dist/web/index.html
-
-    - name: Assemble exact release ZIP
-      shell: bash
-      run: ./scripts/package_addon.sh
-
-    - name: Verify closed package manifest
-      shell: bash
-      run: ./scripts/verify_package.sh
-
-    - name: Verify installed package and editor lifecycle
-      shell: bash
-      run: ./scripts/verify_installed_package.sh
+      run: make check
