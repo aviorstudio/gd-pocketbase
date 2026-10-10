@@ -23,7 +23,7 @@ func _ready() -> void:
 	)
 	result_node.textContent = (
 		"GD PocketBase web boundary PASS\n"
-		+ "version=0.0.3\n"
+		+ "version=0.0.4\n"
 		+ "normalize=native-and-proxy\n"
 		+ "session-core=@aviorstudio/gd-session"
 		if passed
