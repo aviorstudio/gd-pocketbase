@@ -41,6 +41,9 @@ jobs:
     environment: release
     permissions:
       contents: write
+      # Trusted publishing: the registry accepts the job's OIDC token as proof
+      # of this repository; no registry secret is involved.
+      id-token: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -79,15 +82,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release create "${{ steps.release.outputs.tag }}" dist/@aviorstudio_gd-pocketbase.zip --target "$GITHUB_SHA" --title "${{ steps.release.outputs.tag }}" --notes "Release ${{ steps.release.outputs.tag }} from $GITHUB_SHA"
-      - name: Install GDAM
-        uses: aviorstudio/gdam-actions/install@a9aabf09570bc592631e067ed0bbfedb69cc4caa # v0.4.0
-        with:
-          version: v0.1.0
-          archive-sha256: 63bfb66ff08b1191607e37324321a6bdb093d7639e38421d1f1f0854cf7ccb13
-
       - name: Publish to GDAM
-        uses: aviorstudio/gdam-actions/publish@a9aabf09570bc592631e067ed0bbfedb69cc4caa # v0.4.0
+        uses: aviorstudio/gdam-actions/publish@9714788996104bd4dec4fc6d5a8083f0792b8055 # v0.4.1
         with:
           tag: ${{ steps.release.outputs.tag }}
-          secret-key: ${{ secrets.GDAM_SECRET_KEY }}
           asset: '@aviorstudio_gd-pocketbase.zip'
