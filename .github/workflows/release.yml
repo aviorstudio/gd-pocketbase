@@ -88,7 +88,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release create "${{ steps.release.outputs.tag }}" dist/@aviorstudio_gd-pocketbase.zip --target "$GITHUB_SHA" --title "${{ steps.release.outputs.tag }}" --notes "Release ${{ steps.release.outputs.tag }} from $GITHUB_SHA"
       - name: "Publish addon"
-        uses: aviorstudio/gdam-actions/publish@9714788996104bd4dec4fc6d5a8083f0792b8055 # v0.4.1
+        uses: aviorstudio/gdam-actions/publish@6677226d9353df1d410f3e7f5075e13b3b7d5308 # v0.5.1
         with:
           tag: ${{ steps.release.outputs.tag }}
           asset: '@aviorstudio_gd-pocketbase.zip'
