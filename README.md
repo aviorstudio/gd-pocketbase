@@ -1,4 +1,4 @@
-<!-- Generated from private documentation source. Do not edit directly. Source SHA256: 946e8fe387839d69ec9b31f1de6407dfcd34d83bf203eb051f6d4784de02fadb -->
+<!-- Generated from private documentation source. Do not edit directly. Source SHA256: bfa36199be62bf4e7a62c9df006fee0b4c4a228e757a54492c899ef30cdad416 -->
 
 # gd-pocketbase
 
@@ -45,3 +45,15 @@ addon never needs them.
 ## License
 
 See `LICENSE`.
+
+## Repository development
+
+Install the [Komizo release](https://github.com/nicodes/komizo#install) matching `komizo.lock`.
+
+```sh
+komizo check                 # Source, runtime, package and installed-addon checks
+komizo run test              # Focused addon test suite
+komizo run artifact-check    # Verify the built package
+```
+
+The addon recipe supplies the verified Godot engine and templates in checkout-owned tool/data directories. Interactive use belongs to a consuming Godot project.
