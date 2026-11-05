@@ -5,17 +5,26 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 ROOT_DIR=$(cd "$SCRIPT_DIR/.." && pwd)
 FIXTURES="$SCRIPT_DIR/fixtures/gate"
 
+run_case() {
+    local program=$1
+    local name
+    name=$(basename "$program")
+    local escaped=${name//./\\.}
+    python3 "${TOOLS_ROOT:?Run make setup}/helpers/godot-test.py" \
+        --project "$ROOT_DIR" --program "$program" --timeout "${TEST_TIMEOUT_SECONDS:-30}" \
+        --sentinel-regex "^TEST_SENTINEL:${escaped}:([1-9][0-9]*)$"
+}
+
 expect_pass() {
     local name=$1
-    TEST_TIMEOUT_SECONDS=5 "$SCRIPT_DIR/run_godot_test.sh" "$ROOT_DIR" "$FIXTURES/$name" >/dev/null
+    TEST_TIMEOUT_SECONDS=5 run_case "$FIXTURES/$name" >/dev/null
     echo "GATE_CONTROL_RESTORED:$name:pass"
 }
 
 expect_fail() {
     local name=$1
     local timeout_seconds=${2:-5}
-    if TEST_TIMEOUT_SECONDS="$timeout_seconds" "$SCRIPT_DIR/run_godot_test.sh" \
-        "$ROOT_DIR" "$FIXTURES/$name" >/dev/null 2>&1; then
+    if TEST_TIMEOUT_SECONDS="$timeout_seconds" run_case "$FIXTURES/$name" >/dev/null 2>&1; then
         echo "Negative gate control unexpectedly passed: $name" >&2
         exit 1
     fi

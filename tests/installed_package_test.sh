@@ -34,8 +34,9 @@ run_editor
 run_editor
 
 cp "$ROOT_DIR/tests/packaged_smoke.gd" "$FIXTURE/packaged_smoke.gd"
-TEST_TIMEOUT_SECONDS=30 "$ROOT_DIR/tests/run_godot_test.sh" \
-    "$FIXTURE" "$FIXTURE/packaged_smoke.gd"
+python3 "${TOOLS_ROOT:?Run make setup}/helpers/godot-test.py" \
+    --project "$FIXTURE" --program "$FIXTURE/packaged_smoke.gd" --timeout 30 \
+    --sentinel-regex '^TEST_SENTINEL:packaged_smoke\.gd:([1-9][0-9]*)$'
 
 # Disable and restart twice. The addon owns no autoload or consumer setting.
 python3 - "$FIXTURE/project.godot" <<'PY'
@@ -54,6 +55,10 @@ if grep -Eq '^\[autoload\]|@aviorstudio_gd-pocketbase' "$FIXTURE/project.godot";
     echo "Addon lifecycle left owned project configuration" >&2
     exit 1
 fi
+
+python3 "${TOOLS_ROOT:?Run make setup}/helpers/addon-package.py" verify \
+    --archive "$ZIP_PATH" --manifest "$ROOT_DIR/package.files" \
+    --source "$ROOT_DIR/addon" --installed "$ADDON_DIR" --script-uids
 
 TREE_SHA=$(cd "$ADDON_DIR" && find . -type f -print0 | sort -z | \
     xargs -0 sha256sum | sha256sum | cut -d' ' -f1)
