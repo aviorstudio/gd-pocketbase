@@ -39,3 +39,6 @@ publish_timeout = 20
 environment = "release"
 tag_prefix = "v"
 initial = "first"
+
+[ci]
+timeout_minutes = 30
