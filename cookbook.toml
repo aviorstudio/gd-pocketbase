@@ -11,7 +11,7 @@ script_uids = true
 required_paths = ["addon/plugin.cfg", "package.files"]
 
 [format]
-paths = ["addon", "tests"]
+paths = ["addon/plugin.gd", "addon/src/auth_response_module.gd", "tests/auth_response_module_test.gd", "tests/packaged_smoke.gd", "tests/web/web_smoke.gd"]
 
 [clean]
 paths = ["dist", ".artifacts/build", ".artifacts/godot", ".artifacts/godot-data", ".artifacts/tmp", ".godot"]
