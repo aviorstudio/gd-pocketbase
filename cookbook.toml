@@ -1,0 +1,41 @@
+version = 1
+recipe = "godot-addon"
+
+[package]
+source = "addon"
+manifest = "package.files"
+archive = "dist/@aviorstudio_gd-pocketbase.zip"
+script_uids = true
+
+[lint]
+required_paths = ["addon/plugin.cfg", "package.files"]
+
+[format]
+paths = ["addon", "tests"]
+
+[clean]
+paths = ["dist", ".artifacts/build", ".artifacts/godot", ".artifacts/godot-data", ".artifacts/tmp", ".godot"]
+
+[[components.fixture_exports]]
+project = "."
+preset = "Web"
+output = "dist/web/index.html"
+timeout = 120
+required_outputs = ["index.html", "index.wasm"]
+
+[[tests.unit]]
+runner = "bash"
+path = "tests/test.sh"
+timeout = 300
+
+[[tests.integration]]
+runner = "bash"
+path = "tests/installed_package_test.sh"
+timeout = 300
+
+[publication]
+validation_timeout = 20
+publish_timeout = 20
+environment = "release"
+tag_prefix = "v"
+initial = "first"

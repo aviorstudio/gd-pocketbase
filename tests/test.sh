@@ -16,7 +16,11 @@ if [[ ${#TESTS[@]} -eq 0 || ! -f "${TESTS[0]}" ]]; then
 fi
 
 for test in "${TESTS[@]}"; do
-    "$SCRIPT_DIR/run_godot_test.sh" "$ROOT_DIR" "$test"
+    name=$(basename "$test")
+    escaped=${name//./\\.}
+    python3 "${TOOLS_ROOT:?Run make setup}/helpers/godot-test.py" \
+        --project "$ROOT_DIR" --program "$test" --timeout 30 \
+        --sentinel-regex "^TEST_SENTINEL:${escaped}:([1-9][0-9]*)$"
 done
 
 echo "TEST_SUITE_PASS:gdscripts:${#TESTS[@]}"
