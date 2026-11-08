@@ -10,7 +10,7 @@ run_case() {
     local name
     name=$(basename "$program")
     local escaped=${name//./\\.}
-    python3 "${TOOLS_ROOT:?Run make setup}/helpers/godot-test.py" \
+    python3 "${TOOLS_ROOT:?Run mise run setup}/helpers/godot-test.py" \
         --project "$ROOT_DIR" --program "$program" --timeout "${TEST_TIMEOUT_SECONDS:-30}" \
         --sentinel-regex "^TEST_SENTINEL:${escaped}:([1-9][0-9]*)$"
 }

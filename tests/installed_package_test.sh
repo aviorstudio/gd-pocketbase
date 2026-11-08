@@ -34,7 +34,7 @@ run_editor
 run_editor
 
 cp "$ROOT_DIR/tests/packaged_smoke.gd" "$FIXTURE/packaged_smoke.gd"
-python3 "${TOOLS_ROOT:?Run make setup}/helpers/godot-test.py" \
+python3 "${TOOLS_ROOT:?Run mise run setup}/helpers/godot-test.py" \
     --project "$FIXTURE" --program "$FIXTURE/packaged_smoke.gd" --timeout 30 \
     --sentinel-regex '^TEST_SENTINEL:packaged_smoke\.gd:([1-9][0-9]*)$'
 
@@ -56,7 +56,7 @@ if grep -Eq '^\[autoload\]|@aviorstudio_gd-pocketbase' "$FIXTURE/project.godot";
     exit 1
 fi
 
-python3 "${TOOLS_ROOT:?Run make setup}/helpers/addon-package.py" verify \
+python3 "${TOOLS_ROOT:?Run mise run setup}/helpers/addon-package.py" verify \
     --archive "$ZIP_PATH" --manifest "$ROOT_DIR/package.files" \
     --source "$ROOT_DIR/addon" --installed "$ADDON_DIR" --script-uids
 

@@ -18,7 +18,7 @@ fi
 for test in "${TESTS[@]}"; do
     name=$(basename "$test")
     escaped=${name//./\\.}
-    python3 "${TOOLS_ROOT:?Run make setup}/helpers/godot-test.py" \
+    python3 "${TOOLS_ROOT:?Run mise run setup}/helpers/godot-test.py" \
         --project "$ROOT_DIR" --program "$test" --timeout 30 \
         --sentinel-regex "^TEST_SENTINEL:${escaped}:([1-9][0-9]*)$"
 done
