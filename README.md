@@ -1,4 +1,4 @@
-<!-- Generated from private documentation source. Do not edit directly. Source SHA256: d1ae933e32b853c041e3e6d0d4060591a6c99186ebc8d8a02acd3b5467ce113f -->
+<!-- Generated from private documentation source. Do not edit directly. Source SHA256: 4ca03bd438de45d6871390f3dd765aeb082bc43dd5669f4798042c68bf54c29a -->
 
 # gd-pocketbase
 
@@ -51,13 +51,13 @@ See `LICENSE`.
 Install [mise](https://mise.jdx.dev/), then prepare the pinned cookbook and SDKs:
 
 ```sh
-make setup
-make build
-make test
+mise run setup
+mise run build
+mise run test
 ```
 
-`make help` lists the available commands. `mise.toml` pins SDK versions; `cookbook.toml` declares package inputs and native tests. Shared automation comes from the exact `nicodes/tools` revision in `Makefile`. Engine and template downloads are checksum verified.
+`mise run help` lists the available commands. `mise.toml` pins SDK versions; `cookbook.toml` declares package inputs and native tests. Shared recipes come from the exact `nicodes/cookbook` revision in the generated `mise.toml` task block. Engine and template downloads are checksum verified.
 
-`make build` packages the addon, validates its closed file manifest and checksums, and prepares any declared native export fixtures. `make test` runs all declared source, security and behavioral groups against the current source and prebuilt package. Individual groups are available as `make test:lint`, `make test:unit`, `make test:security`, and the integration or browser groups listed by `make help`. Tests do not prepare dependencies or rebuild the addon. Build and test receipts stay in `.artifacts/verification`.
+`mise run build` packages the addon, validates its closed file manifest and checksums, and prepares any declared native export fixtures. `mise run test` runs all declared source, security and behavioral groups against the current source and prebuilt package. Individual groups are available as `mise run test:lint`, `mise run test:unit`, `mise run test:security`, and the integration or browser groups listed by `mise run help`. Tests do not prepare dependencies or rebuild the addon. Build and test receipts stay in `.artifacts/verification`.
 
-`make fmt` formats owned GDScript. `make clean` removes declared generated outputs while preserving source and retained data. This package has no application development service.
+`mise run fmt` formats owned GDScript. `mise run clean` removes declared generated outputs while preserving source and retained data. This package has no application development service.
